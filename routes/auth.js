@@ -3,9 +3,6 @@ const router = express.Router()
 const { hash, compare } = require('bcryptjs')
 const { verify } = require('jsonwebtoken')
 
-//const User = require('../models/user')
-//const database = require('../utils/db')
-
 const Nedb = require('nedb-promises-ts')
 const authDb = new Nedb.Datastore({filename: "auth.db", autoload: true})
 
@@ -218,15 +215,19 @@ router.post('/send-password-reset-email', async (req, res) => {
 
 		const url = createPasswordResetUrl(user._id, token)
 
+		console.log(user._id)
+		console.log(token)
+
 		const mailOptions = passwordResetTemplate(user, url)
 		transporter.sendMail(mailOptions, (err, info) => {
 			console.log(err, info)
-			if (err)
+			if (err){
+				console.log(err)
 				return res.status(500).json({
 					message: 'Error sending email! 😢',
 					type: 'error',
 				})
-
+			}
 			return res.json({
 				message: 'Password reset link has been sent to your email! 📧',
 				type: 'success',
@@ -246,6 +247,9 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 	try {
 		const { id, token } = req.params
 		const { newPassword } = req.body
+
+		console.log(`id=${id}`)
+		console.log(`token=${token}`)
 
 		const user = await authDb.findOne({_id: id})
 

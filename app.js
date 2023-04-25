@@ -2,7 +2,6 @@ require('dotenv').config()
 
 const express = require('express')
 const cookieParser = require('cookie-parser')
-const mongoose = require('mongoose')
 const { rateLimiter } = require('./utils/rateLimiter')
  
 const indexRouter = require('./routes/index')
@@ -19,15 +18,6 @@ app.use(cookieParser())
 
 app.use('/', indexRouter)
 app.use('/auth', authRouter)
-
-mongoose
-	.connect(process.env.MONGO_URI, {
-		useNewUrlParser: true,
-		useUnifiedTopology: true,
-	})
-	.then(() => {
-		console.log('MongoDB connection is established successfully! 🎉')
-	})
 
 app.listen(PORT, function () {
 	console.log(`🚀 Listening on port ${PORT}`)
