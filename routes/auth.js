@@ -247,7 +247,7 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 		const { id, token } = req.params
 		const { newPassword } = req.body
 
-		const user = await User.findById(id)
+		const user = await authDb.findOne({_id: id})
 
 		if (!user)
 			return res.status(500).json({
@@ -265,7 +265,7 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 
 		user.password = await hash(newPassword, 10)
 
-		await user.save()
+		await authDb.update({email: email}, user)
 
 		const mailOptions = passwordResetConfirmationTemplate(user)
 		transporter.sendMail(mailOptions, (err, info) => {
