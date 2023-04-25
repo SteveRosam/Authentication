@@ -3,7 +3,11 @@ const router = express.Router()
 const { hash, compare } = require('bcryptjs')
 const { verify } = require('jsonwebtoken')
 
-const User = require('../models/user')
+//const User = require('../models/user')
+//const database = require('../utils/db')
+
+const Nedb = require('nedb-promises-ts')
+const authDb = new Nedb.Datastore({filename: "auth.db", autoload: true})
 
 const {
 	createAccessToken,
@@ -18,6 +22,7 @@ const {
 	passwordResetTemplate,
 	passwordResetConfirmationTemplate,
 } = require('../utils/email')
+
 const { protected } = require('../utils/protected')
 
 /* GET main auth page. */
@@ -28,21 +33,25 @@ router.get('/', async (req, res) => {
 router.post('/signup', async (req, res) => {
 	try {
 		const { email, password } = req.body
-
-		const user = await User.findOne({ email: email })
-		if (user)
+		console.log('Body: ', req.body)
+		console.log('email: ', email)
+		
+		//const user = await User.findOne({ email: email }) // for mongo
+		const user = await authDb.findOne({ email: email })
+		if (user !== null)
 			return res.status(500).json({
 				message: 'User already exists! Try logging in. 😄',
 				type: 'warning',
 			})
 
 		const passwordHash = await hash(password, 10)
-		const newUser = new User({
+		const newUser = {
 			email: email,
 			password: passwordHash,
-		})
+		}
 
-		await newUser.save()
+		await authDb.insert(newUser)
+		//await newUser.save() // for mongo
 
 		res.status(200).json({
 			message: 'User created successfully! 🥳',
@@ -62,13 +71,17 @@ router.post('/signin', async (req, res) => {
 	try {
 		const { email, password } = req.body
 
-		const user = await User.findOne({ email: email }).select('+refreshtoken')
-		if (!user)
+		const user = await authDb.findOne({ email: email })
+
+		//const user = await User.findOne({ email: email }).select('+refreshtoken')
+		if (user === null)
 			return res.status(500).json({
 				message: "User doesn't exist! 😢",
 				type: 'error',
 			})
+		console.log(user)
 
+		console.log(user.password)
 		const isMatch = await compare(password, user.password)
 		if (!isMatch)
 			return res.status(500).json({
@@ -80,7 +93,7 @@ router.post('/signin', async (req, res) => {
 		const refreshToken = createRefreshToken(user._id)
 
 		user.refreshtoken = refreshToken
-		await user.save()
+		await authDb.update({email: email}, user)
 
 		sendRefreshToken(res, refreshToken)
 		sendAccessToken(req, res, accessToken)
@@ -95,7 +108,11 @@ router.post('/signin', async (req, res) => {
 	}
 })
 
-router.post('/logout', (_req, res) => {
+router.post('/logout', async (_req, res) => {
+
+	// maybe clear some token in the db?
+	//let usr = database.auth.insert({hi: "friends"})
+	
 	res.clearCookie('refreshtoken')
 	return res.json({
 		message: 'Logged out successfully! 🤗',
@@ -128,7 +145,7 @@ router.post('/refresh_token', async (req, res) => {
 				type: 'error',
 			})
 
-		const user = await User.findById(id)
+		const user = await authDb.findOne({_id: id})
 
 		if (!user)
 			return res.status(500).json({
@@ -190,7 +207,7 @@ router.post('/send-password-reset-email', async (req, res) => {
 	try {
 		const { email } = req.body
 
-		const user = await User.findOne({ email })
+		const user = await authDb.findOne({ email: email })
 		if (!user)
 			return res.status(500).json({
 				message: "User doesn't exist! 😢",

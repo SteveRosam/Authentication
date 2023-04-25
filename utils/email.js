@@ -3,16 +3,28 @@ const { createTransport } = require('nodemailer')
 const createPasswordResetUrl = (id, token) =>
 	`${process.env.CLIENT_URL}/reset-password/${id}/${token}`
 
+// const transporter = createTransport({
+// 	service: process.env.EMAIL_HOST,
+// 	auth: {
+// 		user: process.env.EMAIL_USER,
+// 		pass: process.env.EMAIL_PASSWORD,
+// 	},
+// })
+
 const transporter = createTransport({
-	service: process.env.EMAIL_HOST,
-	auth: {
-		user: process.env.EMAIL_USER,
-		pass: process.env.EMAIL_PASSWORD,
-	},
-})
+	host: "0.0.0.0",
+	port: 25,
+	secure: false // upgrade later with STARTTLS
+  });
+
+//   auth: {
+// 	user: "username",
+// 	pass: "password",
+//   }, 
 
 const passwordResetTemplate = (user, url) => {
 	const { username, email } = user
+	console.log("TO: ", email)
 	return {
 		from: `Mail - <${process.env.EMAIL_USER}>`,
 		to: email,

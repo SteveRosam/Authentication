@@ -9,8 +9,10 @@ const protected = async (req, res, next) => {
 			message: 'No token! 🤔',
 			type: 'error',
 		})
+	console.log("authorization", authorization)
 
 	const token = authorization.split(' ')[1]
+	console.log("token", token)
 	let id
 	try {
 		id = verify(token, process.env.ACCESS_TOKEN_SECRET).id
