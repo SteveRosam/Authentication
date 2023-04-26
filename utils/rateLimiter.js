@@ -25,17 +25,18 @@ const rateLimiter = async (req, res, next) => {
     console.log(diff < 4000);
     lastAccessTime = new Date();
 
-    console.log("here");
     if (diff < 2000) {
-      res.status(500).json({
-        type: "error",
-        message: "Rate limit exceeded!",
-      });
+      // res.status(500).json({
+      //   type: "error",
+      //   message: "Rate limit exceeded!",
+      // });
+      console.log("This would have been rate limited!")
+      next();
     } else {
       next();
     }
   } catch (e) {
-    console.log(e);
+    console.log("Rate limit error:" + e);
   }
 };
 

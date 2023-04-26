@@ -210,13 +210,8 @@ router.post('/send-password-reset-email', async (req, res) => {
 				message: "User doesn't exist! 😢",
 				type: 'error',
 			})
-
 		const token = createPasswordResetToken(user)
-
 		const url = createPasswordResetUrl(user._id, token)
-
-		console.log(user._id)
-		console.log(token)
 
 		const mailOptions = passwordResetTemplate(user, url)
 		transporter.sendMail(mailOptions, (err, info) => {
@@ -226,6 +221,7 @@ router.post('/send-password-reset-email', async (req, res) => {
 				return res.status(500).json({
 					message: 'Error sending email! 😢',
 					type: 'error',
+					err: err
 				})
 			}
 			return res.json({
@@ -247,6 +243,13 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 	try {
 		const { id, token } = req.params
 		const { newPassword } = req.body
+		
+		if(newPassword === undefined){
+			res.status(500).json({
+				type: 'error',
+				message: 'newPassword is not defined',
+			})
+		}
 
 		console.log(`id=${id}`)
 		console.log(`token=${token}`)
@@ -269,7 +272,7 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 
 		user.password = await hash(newPassword, 10)
 
-		await authDb.update({email: email}, user)
+		await authDb.update({_id: id}, user)
 
 		const mailOptions = passwordResetConfirmationTemplate(user)
 		transporter.sendMail(mailOptions, (err, info) => {
@@ -285,6 +288,8 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 			})
 		})
 	} catch (error) {
+		console.log('Error: ', error)
+
 		res.status(500).json({
 			type: 'error',
 			message: 'Error sending email!',

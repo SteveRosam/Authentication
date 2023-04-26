@@ -11,6 +11,14 @@ const PORT = 8080
 
 const app = express()
 
+var bodyparser = require('body-parser')
+app.use(bodyparser.urlencoded({extended: false}))
+app.use(bodyparser.json())
+// app.use(function (req, res) {
+// 	console.log(JSON.stringify(req.body, null, 2))
+// })
+
+  
 app.use(rateLimiter)
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
