@@ -1,5 +1,6 @@
 const { verify } = require('jsonwebtoken')
-const User = require('../models/user')
+const Nedb = require('nedb-promises-ts')
+const authDb = new Nedb.Datastore({filename: "auth.db", autoload: true})
 
 const protected = async (req, res, next) => {
 	const authorization = req.headers['authorization']
@@ -29,7 +30,7 @@ const protected = async (req, res, next) => {
 			type: 'error',
 		})
 
-	const user = await User.findById(id)
+	const user = await authDb.findOne({_id: id})
 
 	if (!user)
 		return res.status(500).json({
