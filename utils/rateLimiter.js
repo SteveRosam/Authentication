@@ -1,11 +1,19 @@
+const quix = require('../utils/quix')
+
 let lastAccessTime = 0;
 let accessCount = 0;
 
 const rateLimiter = async (req, res, next) => {
   try {
-    //console.log(req)
+    console.log(req)
     console.log(req.ip);
     console.log(req.socket.remoteAddress);
+
+
+    // todo combine timeseries data
+    await quix.publishTelemetry("route_access", req.originalUrl, "router")
+    await quix.publishTelemetry("remote_address", req.socket.remoteAddress, "router")
+
 
     if (req.socket.remoteAddress != "::1") {
       console.log("NOT LOCAL");

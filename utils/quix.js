@@ -47,6 +47,7 @@ const publishEvent = async (id, value, userId) => {
 
 }
 
+
 const publishTelemetry = async (id, value, userId, unauthorized = false) => {
 
     // 1 stream per user.. so use userid or email
@@ -58,9 +59,10 @@ const publishTelemetry = async (id, value, userId, unauthorized = false) => {
 
     const data = JSON.stringify(
             {
-                "timestamps": [ Date.now() * 1000 ],
+                "timestamps": [ Date.now() * 1000, Date.now() * 1001 ],
                 "tagValues": { userId: [ userId ], authorized: [ unauthorized === true ? "false" : "true"]},
-                "stringValues": JSON.parse(vals)
+                "stringValues": JSON.parse(vals),
+                "numericValues": {myNum: [0,1]}
             })
     
     const options = {
