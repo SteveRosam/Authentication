@@ -30,8 +30,8 @@ router.get('/', async (req, res) => {
 router.post('/signup', async (req, res) => {
 	try {
 		const { email, password } = req.body
-		console.log('Body: ', req.body)
-		console.log('email: ', email)
+		// console.log('Body: ', req.body)
+		// console.log('email: ', email)
 		
 		//const user = await User.findOne({ email: email }) // for mongo
 		const user = await authDb.findOne({ email: email })
@@ -76,9 +76,9 @@ router.post('/signin', async (req, res) => {
 				message: "User doesn't exist! 😢",
 				type: 'error',
 			})
-		console.log(user)
+		// console.log(user)
 
-		console.log(user.password)
+		// console.log(user.password)
 		const isMatch = await compare(password, user.password)
 		if (!isMatch)
 			return res.status(500).json({
@@ -251,8 +251,8 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 			})
 		}
 
-		console.log(`id=${id}`)
-		console.log(`token=${token}`)
+		// console.log(`id=${id}`)
+		// console.log(`token=${token}`)
 
 		const user = await authDb.findOne({_id: id})
 

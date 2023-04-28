@@ -10,6 +10,7 @@ const protected = async (req, res, next) => {
 			message: 'No token! 🤔',
 			type: 'error',
 		})
+		
 	console.log("authorization", authorization)
 
 	const token = authorization.split(' ')[1]

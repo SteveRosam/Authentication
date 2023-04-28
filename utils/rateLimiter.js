@@ -1,19 +1,10 @@
-const quix = require('../utils/quix')
+const quixHelpers = require('../utils/publishHelpers')
 
 let lastAccessTime = 0;
-let accessCount = 0;
 
 const rateLimiter = async (req, res, next) => {
+  let isLimited = false;
   try {
-    console.log(req)
-    console.log(req.ip);
-    console.log(req.socket.remoteAddress);
-
-
-    // todo combine timeseries data
-    await quix.publishTelemetry("route_access", req.originalUrl, "router")
-    await quix.publishTelemetry("remote_address", req.socket.remoteAddress, "router")
-
 
     if (req.socket.remoteAddress != "::1") {
       console.log("NOT LOCAL");
@@ -38,13 +29,19 @@ const rateLimiter = async (req, res, next) => {
       //   type: "error",
       //   message: "Rate limit exceeded!",
       // });
-      console.log("This would have been rate limited!")
-      next();
+      console.log("This would have been rate limited!");
+      isLimited = true;
+      next(); //remove when implementing rate limiting
     } else {
       next();
     }
   } catch (e) {
     console.log("Rate limit error:" + e);
+  } finally {
+    quixHelpers.publishRateTelemetry({
+      remoteAddress: req.socket.remoteAddress, 
+      route: req.originalUrl, 
+      isLimited: isLimited});
   }
 };
 

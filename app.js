@@ -3,6 +3,7 @@ require('dotenv').config()
 const express = require('express')
 const cookieParser = require('cookie-parser')
 const { rateLimiter } = require('./utils/rateLimiter')
+const { routeLogger } = require('./utils/routeLogger')
  
 const indexRouter = require('./routes/index')
 const authRouter = require('./routes/auth')
@@ -19,7 +20,7 @@ app.use(bodyparser.json())
 // 	console.log(JSON.stringify(req.body, null, 2))
 // })
 
-  
+app.use(routeLogger)
 app.use(rateLimiter)
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
