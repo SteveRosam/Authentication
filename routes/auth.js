@@ -3,8 +3,14 @@ const router = express.Router()
 const { hash, compare } = require('bcryptjs')
 const { verify } = require('jsonwebtoken')
 
-const Nedb = require('nedb-promises-ts')
-const authDb = new Nedb.Datastore({filename: "auth.db", autoload: true})
+const db_layer = require('../data_layer/data_layer')
+
+const auth_database = db_layer.getAuthDb('nedb')
+//const auth_database = db_layer.getAuthDb('mongo')
+auth_database.init()
+
+//const Nedb = require('nedb-promises-ts')
+//const authDb = new Nedb.Datastore({filename: "auth.db", autoload: true})
 
 const {
 	createAccessToken,
@@ -34,7 +40,8 @@ router.post('/signup', async (req, res) => {
 		// console.log('email: ', email)
 		
 		//const user = await User.findOne({ email: email }) // for mongo
-		const user = await authDb.findOne({ email: email })
+		//const user = await authDb.findOne({ email: email })
+		const user = await auth_database.findByEmail(email)
 		if (user !== null)
 			return res.status(500).json({
 				message: 'User already exists! Try logging in. 😄',
@@ -47,8 +54,9 @@ router.post('/signup', async (req, res) => {
 			password: passwordHash,
 		}
 
-		await authDb.insert(newUser)
+		//await authDb.insert(newUser)
 		//await newUser.save() // for mongo
+		await auth_database.insert(newUser)
 
 		res.status(200).json({
 			message: 'User created successfully! 🥳',
@@ -68,7 +76,7 @@ router.post('/signin', async (req, res) => {
 	try {
 		const { email, password } = req.body
 
-		const user = await authDb.findOne({ email: email })
+		const user = await auth_database.findByEmail(email)
 
 		//const user = await User.findOne({ email: email }).select('+refreshtoken')
 		if (user === null)
@@ -89,8 +97,7 @@ router.post('/signin', async (req, res) => {
 		const accessToken = createAccessToken(user._id)
 		const refreshToken = createRefreshToken(user._id)
 
-		user.refreshtoken = refreshToken
-		await authDb.update({email: email}, user)
+		await auth_database.updateRefreshToken(email, refreshToken)
 
 		sendRefreshToken(res, refreshToken)
 		sendAccessToken(req, res, accessToken)
@@ -142,7 +149,7 @@ router.post('/refresh_token', async (req, res) => {
 				type: 'error',
 			})
 
-		const user = await authDb.findOne({_id: id})
+		const user = await auth_database.findById(id)
 
 		if (!user)
 			return res.status(500).json({
@@ -159,7 +166,7 @@ router.post('/refresh_token', async (req, res) => {
 		const accessToken = createAccessToken(user._id)
 		const refreshToken = createRefreshToken(user._id)
 
-		user.refreshtoken = refreshToken
+		await auth_database.updateRefreshToken(user.email, refreshToken)
 
 		sendRefreshToken(res, refreshToken)
 		return res.json({
@@ -178,6 +185,7 @@ router.post('/refresh_token', async (req, res) => {
 	}
 })
 
+// example of using a protected route
 router.get('/protected', protected, async (req, res) => {
 	try {
 		if (req.user)
@@ -204,7 +212,7 @@ router.post('/send-password-reset-email', async (req, res) => {
 	try {
 		const { email } = req.body
 
-		const user = await authDb.findOne({ email: email })
+		const user = await auth_database.findByEmail(email)
 		if (!user)
 			return res.status(500).json({
 				message: "User doesn't exist! 😢",
@@ -254,7 +262,7 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 		// console.log(`id=${id}`)
 		// console.log(`token=${token}`)
 
-		const user = await authDb.findOne({_id: id})
+		const user = await auth_database.findById(id)
 
 		if (!user)
 			return res.status(500).json({
@@ -270,9 +278,9 @@ router.post('/reset-password/:id/:token', async (req, res) => {
 				type: 'error',
 			})
 
-		user.password = await hash(newPassword, 10)
+		const password = await hash(newPassword, 10)
 
-		await authDb.update({_id: id}, user)
+		await auth_database.updatePassword(id, password)
 
 		const mailOptions = passwordResetConfirmationTemplate(user)
 		transporter.sendMail(mailOptions, (err, info) => {
