@@ -1,16 +1,19 @@
 const quixHelpers = require("../utils/publishHelpers");
+const userChecker = require("./userCheck")
 
 const routeLogger = async (req, res, next) => {
     try {
-        const userId = undefined;
-        if (req.user) {
-            userId = req.user._id;
+
+        const user = await userChecker.userCheck(req);
+
+        userId = undefined;
+        if (user) {
+            userId = user._id;
         }
-        
-        quixHelpers.publishTelemetry("routing", "route", {
+        await quixHelpers.publishTelemetry("routing", "route", {
             route: req.originalUrl,
             userId: userId,
-            message: "here"
+            ipAddress: req.ip
         });
 
         next();

@@ -59,27 +59,49 @@ async function publishRateTelemetry(args) {
 }
 
 async function publishTelemetry(topic, stream, args) {
-	let data = new quix.ParameterData();
-    data.addTimestamp(data.timeNow())
 
-    if(!stream){
-        throw "stream is required"
-    }
-    if(!topic){
-        throw "topic is required"
-    }
-    if(args.message){
-        data.addParameter("message", args.message)
-    }
-    if(args.route){
-        data.addParameter("route", args.route)
-    }
-    if(args.userId){
-        data.addParameter("userId", userId)
-    }
+    try{
+        let data = new quix.ParameterData();
+        data.addTimestamp(data.timeNow())
 
+        if(!stream){
+            throw "stream is required"
+        }
+        if(!topic){
+            throw "topic is required"
+        }
+
+        for(element of Object.keys(args)){
+            
+            console.log(`${element} value is ${args[element]}`)
+
+            data.addParameter(element, args[element] ?? "null")
+        }
+
+        // if(args.message){
+        //     data.addParameter("message", args.message)
+        // }
+        // if(args.route){
+        //     data.addParameter("route", args.route)
+        // }
+        // if(args.userId){
+        //     data.addParameter("userId", userId)
+        // }
+        // if(args.ipAddress){
+        //     data.addParameter("ipAddress", args.ipAddress)
+        // }
+        // if(args.jsonData){
+        //     data.addParameter("jsonData", args.jsonData)
+        // }
+            
+        await data.publish(topic, stream)
         
-	await data.publish(topic, stream)
+    } catch(error){
+        console.log("Error publishing telemetry data: " + error)
+    }
+    finally{
+        
+    }
 }
 
 async function publishErrorTelemetry(args) {

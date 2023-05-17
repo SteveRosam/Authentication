@@ -1,5 +1,5 @@
 const express = require('express')
-const routeHelpers = require('../utils/publishHelpers')
+const quixHelpers = require("../utils/publishHelpers");
 
 const router = express.Router()
 const { protected } = require('../utils/protected')
@@ -9,9 +9,9 @@ router.post('/publish', protected, async (req, res) => {
 
 		if (req.user){
 
-			await routeHelpers.publishTelemetry(
-				route = req.originalUrl,
-				userId = req.user._id);
+			await quixHelpers.publishTelemetry("quix", "publish", {
+					userId: userId
+				});
 
             return res.json({
 				message: 'Data published',
@@ -20,6 +20,10 @@ router.post('/publish', protected, async (req, res) => {
 			})
         }
 
+		await quixHelpers.publishTelemetry("quix", "publish-error", {
+			userId: userId,
+			message: "Unauthorized route access"
+		});
         // should never hit this!
 		await routeHelpers.publishErrorTelemetry(
 			"Unauthorized access to route", 
@@ -31,6 +35,11 @@ router.post('/publish', protected, async (req, res) => {
 		})
 
 	} catch (error) {
+		
+		await quixHelpers.publishTelemetry("quix", "publish-error", {
+			error: "publish-failed",
+			message: error.message
+		});
 		res.status(500).json({
 			type: 'error',
 			message: 'Error getting protected route!',
